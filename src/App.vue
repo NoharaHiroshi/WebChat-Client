@@ -61,29 +61,28 @@ export default {
   .msg-box {
     position: relative;
     width: 70%;
-    height: 550px;
+    height: 570px;
     margin: 0 auto;
     background: aliceblue;
     border-radius: 5px;
   }
   .sidebar {
-    position: absolute;
-    left: 0;
-    top: 0;
-    display: inline-block;
+    float: left;
     width: 30%;
     height: 100%;
     background: #2e3238;
     color: #fff;
     box-sizing: border-box;
+    border-radius: 5px 0 0 5px;
   }
   .sidebar .user {
     padding: 18px;
   }
   .sidebar .name {
     font-size: 16px;
-    float: left;
-    margin-bottom: 10px;
+    text-align: left;
+    height: 30px;
+    line-height: 30px;
   }
   .sidebar .base-input {
     padding: 0 10px;
@@ -99,7 +98,8 @@ export default {
     box-sizing: border-box;
   }
   .sidebar .chat-item {
-    padding: 12px 15px;
+    height: 40px;
+    line-height: 40px;
     border-bottom: 1px solid #292c33;
     cursor: pointer;
     -webkit-transition: background-color .1s;
@@ -109,37 +109,34 @@ export default {
     background-color: hsla(0,0%,100%,.03);
   }
   .sidebar .chat-item-selected {
-    background-color: hsla(0,0%,100%,.1);
+    background-color: hsla(0,0%,100%,.1) !important;
   }
   .main {
-    display: inline-block;
-    position: absolute;
+    float: left;
     width: 70%;
-    left: 30%;
-    top: 0;
     height: 100%;
     background: #eee;
+    border-radius: 0 5px 5px 0;
   }
   .main .main-header {
     position: relative;
-    padding: 10px 0;
-    margin: 0 19px;
+    height: 50px;
+    line-height: 50px;
     border-bottom: 1px solid #d6d6d6;
-    background-color: #eee;
     font-size: 14px;
-    height: 5%;
-    line-height: 30px;
   }
   .main .main-content {
     position: relative;
-    height: 60%;
+    height: 350px;
     border-bottom: 1px solid #d6d6d6;
   }
   .main .main-toolbar {
-    padding: 5px 17px;
+    height: 30px;
+    line-height: 30px;
     box-sizing: border-box;
     overflow: hidden;
     text-align: left;
+    margin: 5px 0;
   }
   .main .main-input {
     height: 15%;
@@ -150,7 +147,7 @@ export default {
     font-size: 16px;
     width: 100%;
     box-sizing: border-box;
-    padding-left: 20px;
+    padding-left: 15px;
     background: transparent;
     resize: none;
   }
@@ -163,6 +160,7 @@ export default {
     display: inline-block;
     vertical-align: middle;
     cursor: pointer;
+    margin-left: 10px;
   }
   .main .upload {
     width: 30px;
@@ -175,7 +173,8 @@ export default {
     cursor: pointer;
   }
   .main .main-action {
-    padding: 10px;
+    height: 30px;
+    line-height: 30px;
     text-align: right;
   }
   .submit-msg {
@@ -183,9 +182,10 @@ export default {
     color: #222;
     display: inline-block;
     border: 1px solid #c1c1c1;
-    padding: 3px 20px;
     font-size: 14px;
     border-radius: 4px;
     height: 30px;
+    width: 90px;
+    margin-right: 20px;
   }
 </style>
