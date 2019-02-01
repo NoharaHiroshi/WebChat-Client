@@ -1,34 +1,51 @@
 <template>
   <div id="app">
-    <div class="msg-box">
-      <div class="sidebar">
-        <div class="user">
-          <div class="name">
-            Lands
-          </div>
-          <div class="search">
-            <input class="base-input" placeholder="搜索">
-          </div>
-        </div>
-        <div class="chat-list">
-          <div class="chat-item chat-item-selected">聊天1</div>
-          <div class="chat-item">聊天2</div>
-        </div>
+    <div v-if="!user.name">
+      <div class="user-box">
+        <input class="user-input" placeholder="请输入用户名" v-model="inputName">
+        <button class="base-button" @click="createUser(inputName)">确定</button>
       </div>
-      <div class="main">
-        <div class="main-header">
-          聊天1
+    </div>
+    <div v-if="user.name">
+      <div class="msg-box">
+        <div class="sidebar">
+          <div class="user">
+            <div class="name">
+              <span>{{user.name}}</span>
+            </div>
+            <div class="search">
+              <input class="base-input" placeholder="搜索">
+            </div>
+          </div>
+          <div class="chat-list">
+            <div class="chat-item chat-item-selected">聊天1</div>
+            <div class="chat-item">聊天2</div>
+          </div>
         </div>
-        <div class="main-content">
-
-        </div>
-        <div class="main-toolbar">
-          <span class="emoticon"></span>
-          <span class="upload"></span>
-        </div>
-        <textarea class="main-input"></textarea>
-        <div class="main-action">
-          <button class="submit-msg">发送</button>
+        <div class="main">
+          <div class="main-header">
+            聊天1
+          </div>
+          <div class="main-content">
+            <div class="msg-list" v-for="msg in msgList">
+              <div class="my-msg-item" v-if="msg.sendUser.name === user.name">
+                <span class="my-msg bubble">{{ msg.content }}</span>
+                <span class="my-name">{{ user.name }}</span>
+              </div>
+              <div class="other-msg-item" v-if="msg.sendUser.name !== user.name">
+                <span class="other-name">{{ user.name }}</span>
+                <span class="other-msg">{{ msg.content }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="main-toolbar">
+            <span class="emoticon"></span>
+            <span class="upload"></span>
+          </div>
+          <textarea class="main-input" v-model="msgContent"></textarea>
+          <div class="main-action">
+            <button class="submit-msg" @click="sendMsg()">发送</button>
+          </div>
         </div>
       </div>
     </div>
@@ -40,11 +57,31 @@ export default {
   name: 'App',
   data() {
     return {
-
+      inputName: '',
+      user: {
+        name: ''
+      },
+      msgContent: '',
+      msgList: [],
     }
   },
   methods: {
-
+    createUser(name) {
+      this.user.name = name;
+    },
+    sendMsg() {
+      let date = new Date();
+      let msg = {
+        content: this.msgContent,
+        sendUser: this.user,
+        homeNo: 0,
+        date: date
+      };
+      this.$socket.emit("sendMsg", msg);
+      this.msgList.push(msg);
+      console.log(this.msgList);
+      this.msgContent = '';
+    }
   }
 }
 </script>
@@ -58,13 +95,55 @@ export default {
     color: #2c3e50;
     margin-top: 60px;
   }
+  .base-button {
+    border: none;
+    border-radius: 2px;
+    width: 80px;
+    height: 30px;
+    background: #0fb2cc;
+    color: #fff;
+  }
+  .user-box {
+    position: relative;
+    width: 50%;
+    height: 50px;
+    line-height: 50px;
+    margin: 0 auto;
+    border-radius: 5px;
+    background: #2e3238;
+  }
+  .user-box .user-input {
+    padding: 0 10px;
+    width: 80%;
+    font-size: 12px;
+    color: #fff;
+    height: 30px;
+    line-height: 30px;
+    border: 0;
+    border-radius: 4px;
+    outline: none;
+    background-color: transparent;
+    box-sizing: border-box;
+  }
   .msg-box {
     position: relative;
     width: 70%;
     height: 570px;
     margin: 0 auto;
-    background: aliceblue;
     border-radius: 5px;
+  }
+  .msg-box .base-input {
+    padding: 0 10px;
+    width: 100%;
+    font-size: 12px;
+    color: #fff;
+    height: 30px;
+    line-height: 30px;
+    border: 0;
+    border-radius: 4px;
+    outline: none;
+    background-color: #26292e;
+    box-sizing: border-box;
   }
   .sidebar {
     float: left;
@@ -81,8 +160,8 @@ export default {
   .sidebar .name {
     font-size: 16px;
     text-align: left;
-    height: 30px;
-    line-height: 30px;
+    height: 40px;
+    line-height: 40px;
   }
   .sidebar .base-input {
     padding: 0 10px;
@@ -187,5 +266,37 @@ export default {
     height: 30px;
     width: 90px;
     margin-right: 20px;
+  }
+  .msg-list {
+    margin: 0 auto;
+  }
+  .msg-list .my-msg-item {
+    width: 100%;
+    text-align: right;
+    padding: 10px 15px;
+    box-sizing: border-box;
+  }
+  .my-msg-item  .my-msg{
+    background: #b2e281;
+    color: #fff;
+  }
+  .my-msg-item .my-name {
+    line-height: 30px;
+    height: 30px;
+  }
+  .bubble {
+    max-width: 90%;
+    height: 30px;
+    display: inline-block;
+    vertical-align: top;
+    position: relative;
+    text-align: left;
+    font-size: 14px;
+    line-height: 30px;
+    border-radius: 3px;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    margin: 0 10px;
+    padding: 0 10px;
   }
 </style>
