@@ -3,7 +3,8 @@
     <div v-if="!user.name">
       <div class="user-box">
         <input class="user-input" placeholder="请输入用户名" v-model="inputName">
-        <button class="base-button" @click="createUser(inputName)">确定</button>
+        <input class="user-input" type="password" placeholder="请输入密码" v-model="inputPassword">
+        <button class="base-button" @click="login()">确定</button>
       </div>
     </div>
     <div v-if="user.name">
@@ -17,9 +18,23 @@
               <input class="base-input" placeholder="搜索">
             </div>
           </div>
-          <div class="chat-list">
-            <div class="chat-item chat-item-selected">聊天1</div>
-            <div class="chat-item">聊天2</div>
+          <div class="tab">
+            <div class="tab-item">
+              <span :class="tab === 1?'tab-chat-icon-selected':'tab-chat-icon'" @click="tab = 1"></span>
+            </div>
+            <div class="tab-item">
+              <span :class="tab === 0?'tab-user-icon-selected':'tab-user-icon'" @click="tab = 0"></span>
+            </div>
+          </div>
+          <div class="chat-list" v-if="tab === 0">
+            <div v-for="user in onlineUserList">
+              <div class="chat-item" @click="chatWithUser(user.id)">{{user.name}}</div>
+            </div>
+          </div>
+          <div class="chat-list" v-if="tab === 1">
+            <div v-for="home in historyHomeIds">
+              <div class="chat-item">{{home.userName}}</div>
+            </div>
           </div>
         </div>
         <div class="main">
@@ -28,13 +43,13 @@
           </div>
           <div class="main-content">
             <div class="msg-list" v-for="msg in msgList">
-              <div class="my-msg-item" v-if="msg.sendUser.name === user.name">
-                <span class="my-msg bubble">{{ msg.content }}</span>
+              <div class="my-msg-item" v-if="msg.fromUserId === user.id">
+                <span class="my-msg bubble">{{ msg.msgContent }}</span>
                 <span class="my-name">{{ user.name }}</span>
               </div>
-              <div class="other-msg-item" v-if="msg.sendUser.name !== user.name">
-                <span class="other-name">{{ user.name }}</span>
-                <span class="other-msg">{{ msg.content }}</span>
+              <div class="other-msg-item" v-if="msg.fromUserId !== user.id">
+                <span class="other-name">{{ msg.fromUserName }}</span>
+                <span class="other-msg">{{ msg.msgContent }}</span>
               </div>
             </div>
           </div>
@@ -58,29 +73,136 @@ export default {
   data() {
     return {
       inputName: '',
+      inputPassword: '',
       user: {
-        name: ''
+        name: '',
+        id: '',
+        status: 0
       },
+      onlineUserList: [],
       msgContent: '',
+      msg: {
+        msgContent: '',
+        fromUserId: '',
+        fromUserName: '',
+        sendMsgDate: '',
+        homeId: ''
+      },
       msgList: [],
+      // 0用户，1聊天
+      tab: 0,
+      // 当前聊天窗口打开的会话
+      currentHomeId: '',
+      historyHomeIds: [],
+      webSocket: null
     }
   },
+  created() {
+
+  },
   methods: {
-    createUser(name) {
-      this.user.name = name;
-    },
-    sendMsg() {
-      let date = new Date();
-      let msg = {
-        content: this.msgContent,
-        sendUser: this.user,
-        homeNo: 0,
-        date: date
+    login() {
+      let params = {
+        name: this.inputName,
+        password: this.inputPassword
       };
-      this.$socket.emit("sendMsg", msg);
-      this.msgList.push(msg);
-      console.log(this.msgList);
-      this.msgContent = '';
+      let url = "/api/login";
+      let self = this;
+      this.axios.post(url, params).then(function (res) {
+        let data = res.data;
+        if (data.code === 0){
+          console.log(data);
+          self.user = {
+            name: data.result.name,
+            id: data.result.id
+          };
+          console.log(self.user);
+          let socketUrl = "ws://127.0.0.1:8088/webSocket/" + self.user.id;
+          self.webSocket = new WebSocket(socketUrl);
+          self.user.status = 1;
+          self.getAllOnlineUser();
+          self.getHistoryChat();
+        }else {
+          console.log("登录失败");
+        }
+      }).catch(function (error) {
+
+      });
+    },
+    // 获取所有上线用户
+    getAllOnlineUser() {
+      let self = this;
+      let url = "/api/chat/getOnlineUser";
+      this.axios.get(url).then(function (res) {
+        let data = res.data;
+        if(data.code === 0){
+          let onlineUserList = [];
+          for(let user of data.result){
+            if(user.id !== self.user.id){
+              onlineUserList.push(user);
+            }
+          }
+          self.onlineUserList = onlineUserList;
+        }
+      })
+    },
+    // {"fromUserId": "1551068554600331755", "toUserId": "1551077612143004407", "sendMsgDate": "2019-02-25 12:22:35", "homeId": "1551088108773448650"}
+    sendMsg() {
+      if(this.currentHomeId){
+        let date = new Date();
+        this.msg = {
+          msgContent: this.msgContent,
+          fromUserId: this.user.id,
+          fromUserName: this.user.name,
+          sendMsgDate: date,
+          homeId: this.currentHomeId
+        };
+        this.webSocket.send(JSON.stringify(this.msg));
+        this.msgList.push(this.msg);
+        console.log(this.msg);
+        this.msgContent = '';
+      } else {
+        console.log("请选择会话");
+      }
+    },
+    // 获取历史会话
+    getHistoryChat() {
+      let self = this;
+      let params = {
+        userId: this.user.id
+      };
+      let url = "/api/chat/getHistoryHome";
+      this.axios.post(url, params).then(function (res) {
+        let data = res.data;
+        if(data.code === 0){
+          self.historyHomeIds = data.result;
+        }
+      });
+    },
+    // 创建聊天
+    chatWithUser(userId) {
+      let self = this;
+      let params = {
+        userId: this.user.id,
+        oUserId: userId
+      };
+      let url = "/api/chat/connectChatHome";
+      this.axios.post(url, params).then(function (res) {
+        let data = res.data;
+        if(data.code === 0){
+          let homeInfo = data.result;
+          let existHomeIds = [];
+          for(let existHome of self.historyHomeIds){
+            existHomeIds.push(existHome.homeId);
+          }
+          if(existHomeIds.indexOf(homeInfo.homeId) === -1){
+            self.historyHomeIds.push(homeInfo);
+          }
+          // 创建房间后，自动进入房间界面
+          self.tab = 1;
+          self.currentHomeId = homeInfo.homeId;
+        }
+      });
     }
   }
 }
@@ -114,7 +236,7 @@ export default {
   }
   .user-box .user-input {
     padding: 0 10px;
-    width: 80%;
+    width: 40%;
     font-size: 12px;
     color: #fff;
     height: 30px;
@@ -155,7 +277,7 @@ export default {
     border-radius: 5px 0 0 5px;
   }
   .sidebar .user {
-    padding: 18px;
+    padding: 18px 18px 10px;
   }
   .sidebar .name {
     font-size: 16px;
@@ -163,6 +285,58 @@ export default {
     height: 40px;
     line-height: 40px;
   }
+  .sidebar .tab {
+    overflow: hidden;
+    padding: 0 18px 10px;
+  }
+  .sidebar .tab-item {
+    float: left;
+    display: inline-block;
+    width: 50%;
+    padding: 10px;
+    box-sizing: border-box;
+  }
+  .sidebar .tab-chat-icon {
+    background: url("./assets/chat_white.png");
+    background-size: 100% 100%;
+    width: 25px;
+    height: 25px;
+    display: inline-block;
+    vertical-align: middle;
+  }
+  .sidebar .tab-chat-icon:hover {
+    background: url("./assets/chat_hover.png");
+    background-size: 100% 100%;
+  }
+  .tab-chat-icon-selected {
+    background: url("./assets/chat_hover.png");
+    background-size: 100% 100%;
+    width: 25px;
+    height: 25px;
+    display: inline-block;
+    vertical-align: middle;
+  }
+  .sidebar .tab-user-icon {
+    background: url("./assets/user_white.png");
+    background-size: 100% 100%;
+    width: 25px;
+    height: 25px;
+    display: inline-block;
+    vertical-align: middle;
+  }
+  .sidebar .tab-user-icon:hover {
+    background: url("./assets/user_hover.png");
+    background-size: 100% 100%;
+  }
+  .tab-user-icon-selected {
+    background: url("./assets/user_hover.png");
+    background-size: 100% 100%;
+    width: 25px;
+    height: 25px;
+    display: inline-block;
+    vertical-align: middle;
+  }
+
   .sidebar .base-input {
     padding: 0 10px;
     width: 100%;

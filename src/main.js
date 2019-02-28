@@ -3,9 +3,11 @@
 import Vue from 'vue'
 import App from './App'
 import router from './router'
-import VueWebSocket from 'vue-websocket'
+import axios from 'axios'
+import VueAxios from 'vue-axios'
 
-Vue.use(VueWebSocket, "ws://127.0.0.1:3000");
+Vue.use(VueAxios, axios);
+
 Vue.config.productionTip = false;
 
 /* eslint-disable no-new */
