@@ -49,7 +49,7 @@
               </div>
               <div class="other-msg-item" v-if="msg.fromUserId !== user.id">
                 <span class="other-name">{{ msg.fromUserName }}</span>
-                <span class="other-msg">{{ msg.msgContent }}</span>
+                <span class="other-msg bubble">{{ msg.msgContent }}</span>
               </div>
             </div>
           </div>
@@ -118,16 +118,21 @@ export default {
           };
           console.log(self.user);
           let socketUrl = "ws://127.0.0.1:8088/webSocket/" + self.user.id;
-          self.webSocket = new WebSocket(socketUrl);
-          self.user.status = 1;
-          self.getAllOnlineUser();
-          self.getHistoryChat();
+          self.initWebSocket(socketUrl);
         }else {
           console.log("登录失败");
         }
       }).catch(function (error) {
 
       });
+    },
+    initWebSocket(socketUrl) {
+      let self = this;
+      self.webSocket = new WebSocket(socketUrl);
+      self.webSocket.onmessage = self.receiveMsg;
+      self.user.status = 1;
+      self.getAllOnlineUser();
+      self.getHistoryChat();
     },
     // 获取所有上线用户
     getAllOnlineUser() {
@@ -164,6 +169,10 @@ export default {
       } else {
         console.log("请选择会话");
       }
+    },
+    receiveMsg(e) {
+      let msg = JSON.parse(e.data);
+      this.msgList.push(msg);
     },
     // 获取历史会话
     getHistoryChat() {
@@ -381,7 +390,9 @@ export default {
   .main .main-content {
     position: relative;
     height: 350px;
+    padding: 10px;
     border-bottom: 1px solid #d6d6d6;
+    box-sizing: border-box;
   }
   .main .main-toolbar {
     height: 30px;
@@ -447,7 +458,7 @@ export default {
   .msg-list .my-msg-item {
     width: 100%;
     text-align: right;
-    padding: 10px 15px;
+    padding: 5px 10px;
     box-sizing: border-box;
   }
   .my-msg-item  .my-msg{
@@ -455,22 +466,36 @@ export default {
     color: #fff;
   }
   .my-msg-item .my-name {
-    line-height: 30px;
-    height: 30px;
+    line-height: 35px;
+    height: 35px;
+  }
+  .msg-list .other-msg-item {
+    width: 100%;
+    text-align: left;
+    padding: 5px 10px;
+    box-sizing: border-box;
+  }
+  .other-msg-item .other-name {
+    line-height: 35px;
+    height: 35px;
+  }
+  .other-msg-item .other-msg {
+    background: #fff;
+    color: #333;
   }
   .bubble {
     max-width: 90%;
-    height: 30px;
+    height: 35px;
     display: inline-block;
     vertical-align: top;
     position: relative;
     text-align: left;
     font-size: 14px;
-    line-height: 30px;
+    line-height: 35px;
     border-radius: 3px;
     -moz-border-radius: 3px;
     -webkit-border-radius: 3px;
     margin: 0 10px;
-    padding: 0 10px;
+    padding: 0 13px;
   }
 </style>
