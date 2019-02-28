@@ -39,7 +39,7 @@
         </div>
         <div class="main">
           <div class="main-header">
-            聊天1
+            {{currentHomeName}}
           </div>
           <div class="main-content">
             <div class="msg-list" v-for="msg in msgList">
@@ -93,6 +93,7 @@ export default {
       tab: 0,
       // 当前聊天窗口打开的会话
       currentHomeId: '',
+      currentHomeName: '',
       historyHomeIds: [],
       webSocket: null
     }
@@ -210,6 +211,7 @@ export default {
           // 创建房间后，自动进入房间界面
           self.tab = 1;
           self.currentHomeId = homeInfo.homeId;
+          self.currentHomeName = homeInfo.userName;
         }
       });
     }
