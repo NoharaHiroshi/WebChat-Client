@@ -132,27 +132,8 @@ export default {
       self.webSocket = new WebSocket(socketUrl);
       self.webSocket.onmessage = self.receiveMsg;
       self.user.status = 1;
-      self.getAllOnlineUser();
       self.getHistoryChat();
     },
-    // 获取所有上线用户
-    getAllOnlineUser() {
-      let self = this;
-      let url = "/api/chat/getOnlineUser";
-      this.axios.get(url).then(function (res) {
-        let data = res.data;
-        if(data.code === 0){
-          let onlineUserList = [];
-          for(let user of data.result){
-            if(user.id !== self.user.id){
-              onlineUserList.push(user);
-            }
-          }
-          self.onlineUserList = onlineUserList;
-        }
-      })
-    },
-    // {"fromUserId": "1551068554600331755", "toUserId": "1551077612143004407", "sendMsgDate": "2019-02-25 12:22:35", "homeId": "1551088108773448650"}
     sendMsg() {
       if(this.currentHomeId){
         let date = new Date();
@@ -171,9 +152,52 @@ export default {
         console.log("请选择会话");
       }
     },
+    // 用户登录推送
+    loginMsgHandler(msg){
+      let user = {
+        id: msg.user.id,
+        name: msg.user.name
+      };
+      this.onlineUserList.push(user);
+    },
+    // 获取当前登录用户
+    onlineUserHandler(msg){
+      for(let item of msg.userList){
+        let user = {
+          id: item.id,
+          name: item.name
+        };
+        this.onlineUserList.push(user);
+      }
+    },
+    // 用户退出推送
+    logoutMsgHandler(msg){
+      let self = this;
+      let user = {
+        id: msg.user.id,
+        name: msg.user.name
+      };
+      for(let i=0; i<self.onlineUserList.length; i++){
+        if(self.onlineUserList[i].id === user.id){
+          self.onlineUserList.splice(i, 1);
+        }
+      }
+    },
     receiveMsg(e) {
       let msg = JSON.parse(e.data);
-      this.msgList.push(msg);
+      if(msg.msgType){
+        if(msg.msgType === "login"){
+          this.loginMsgHandler(msg);
+        }
+        if(msg.msgType === "logout"){
+          this.logoutMsgHandler(msg);
+        }
+        if(msg.msgType === "onlineUser"){
+          this.onlineUserHandler(msg);
+        }
+      }else{
+        this.msgList.push(msg);
+      }
     },
     // 获取历史会话
     getHistoryChat() {
