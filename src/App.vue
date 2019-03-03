@@ -13,6 +13,7 @@
           <div class="user">
             <div class="name">
               <span>{{user.name}}</span>
+              <span class="logout" @click="sendLogoutMsg()">退出</span>
             </div>
             <div class="search">
               <input class="base-input" placeholder="搜索">
@@ -128,6 +129,7 @@ export default {
 
       });
     },
+    // 初始化WebSocket
     initWebSocket(socketUrl) {
       let self = this;
       self.webSocket = new WebSocket(socketUrl);
@@ -135,10 +137,12 @@ export default {
       self.user.status = 1;
       self.getHistoryChat();
     },
+    // 向服务端发送信息
     sendMsg() {
       if(this.currentHomeId){
         let date = new Date();
         this.msg = {
+          msgType: 'chat',
           msgContent: this.msgContent,
           fromUserId: this.user.id,
           fromUserName: this.user.name,
@@ -153,6 +157,23 @@ export default {
         console.log("请选择会话");
       }
     },
+    // 接收服务端数据
+    receiveMsg(e) {
+      let msg = JSON.parse(e.data);
+      if (msg.msgType) {
+        if (msg.msgType === "broadcastLoginInfo") {
+          this.loginMsgHandler(msg);
+        }
+        if (msg.msgType === "broadcastLogoutInfo") {
+          this.logoutMsgHandler(msg);
+        }
+        if (msg.msgType === "getOnlineUser") {
+          this.onlineUserHandler(msg);
+        }
+      } else {
+        this.msgList.push(msg);
+      }
+    },
     // 用户登录推送
     loginMsgHandler(msg){
       let user = {
@@ -160,6 +181,16 @@ export default {
         name: msg.user.name
       };
       this.onlineUserList.push(user);
+    },
+    // 用户退出
+    sendLogoutMsg(){
+      let msg = {
+        msgType: 'logout',
+        userId: this.userId
+      };
+      console.log('用户退出');
+      console.log(msg);
+      this.webSocket.send(JSON.stringify(msg));
     },
     // 获取当前登录用户
     onlineUserHandler(msg){
@@ -185,23 +216,6 @@ export default {
         if(self.onlineUserList[i].id === user.id){
           self.onlineUserList.splice(i, 1);
         }
-      }
-    },
-    // 接收服务端数据
-    receiveMsg(e) {
-      let msg = JSON.parse(e.data);
-      if(msg.msgType){
-        if(msg.msgType === "broadcastLoginInfo"){
-          this.loginMsgHandler(msg);
-        }
-        if(msg.msgType === "broadcastLogoutInfo"){
-          this.logoutMsgHandler(msg);
-        }
-        if(msg.msgType === "getOnlineUser"){
-          this.onlineUserHandler(msg);
-        }
-      }else{
-        this.msgList.push(msg);
       }
     },
     // 获取历史会话
@@ -324,6 +338,11 @@ export default {
     text-align: left;
     height: 40px;
     line-height: 40px;
+  }
+  .sidebar .logout {
+    float: right;
+    font-size: 14px;
+    cursor: pointer;
   }
   .sidebar .tab {
     overflow: hidden;
