@@ -82,6 +82,7 @@ export default {
       onlineUserList: [],
       msgContent: '',
       msg: {
+        msgType: '',
         msgContent: '',
         fromUserId: '',
         fromUserName: '',
@@ -172,27 +173,31 @@ export default {
     },
     // 用户退出推送
     logoutMsgHandler(msg){
+      console.log("用户退出");
       let self = this;
       let user = {
         id: msg.user.id,
         name: msg.user.name
       };
+      console.log(user);
       for(let i=0; i<self.onlineUserList.length; i++){
+        console.log(self.onlineUserList[i]);
         if(self.onlineUserList[i].id === user.id){
           self.onlineUserList.splice(i, 1);
         }
       }
     },
+    // 接收服务端数据
     receiveMsg(e) {
       let msg = JSON.parse(e.data);
       if(msg.msgType){
-        if(msg.msgType === "login"){
+        if(msg.msgType === "broadcastLoginInfo"){
           this.loginMsgHandler(msg);
         }
-        if(msg.msgType === "logout"){
+        if(msg.msgType === "broadcastLogoutInfo"){
           this.logoutMsgHandler(msg);
         }
-        if(msg.msgType === "onlineUser"){
+        if(msg.msgType === "getOnlineUser"){
           this.onlineUserHandler(msg);
         }
       }else{
