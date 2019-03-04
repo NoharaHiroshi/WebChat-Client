@@ -160,19 +160,19 @@ export default {
     // 接收服务端数据
     receiveMsg(e) {
       let msg = JSON.parse(e.data);
-      if (msg.msgType) {
-        if (msg.msgType === "broadcastLoginInfo") {
-          this.loginMsgHandler(msg);
-        }
-        if (msg.msgType === "broadcastLogoutInfo") {
-          this.logoutMsgHandler(msg);
-        }
-        if (msg.msgType === "getOnlineUser") {
-          this.onlineUserHandler(msg);
-        }
-      } else {
+      console.log(msg);
+      if (msg.msgType === "broadcastLoginInfo") {
+        this.loginMsgHandler(msg);
+      }
+      else if (msg.msgType === "broadcastLogoutInfo") {
+        this.logoutMsgHandler(msg);
+      }
+      else if (msg.msgType === "getOnlineUser") {
+        this.onlineUserHandler(msg);
+      }else {
         this.msgList.push(msg);
       }
+
     },
     // 用户登录推送
     loginMsgHandler(msg){
