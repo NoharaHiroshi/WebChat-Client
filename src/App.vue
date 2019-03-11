@@ -29,12 +29,17 @@
           </div>
           <div class="chat-list" v-if="tab === 0">
             <div v-for="user in onlineUserList">
-              <div class="chat-item" @click="chatWithUser(user.id)">{{user.name}}</div>
+              <div class="user-item" @click="chatWithUser(user.id)">
+                <span class="avater">{{ buildAvater(user.name) }}</span>
+                <span class="user-name">{{ user.name }}</span>
+              </div>
             </div>
           </div>
           <div class="chat-list" v-if="tab === 1">
             <div v-for="home in historyHomeIds">
-              <div class="chat-item">{{home.userName}}</div>
+              <div class="chat-item">
+                <span>{{ home.userName }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -101,7 +106,7 @@ export default {
     }
   },
   created() {
-
+    
   },
   methods: {
     login() {
@@ -120,6 +125,7 @@ export default {
             id: data.result.id
           };
           console.log(self.user);
+          self.$cookies.set("user", self.user);
           let socketUrl = "ws://127.0.0.1:8088/webSocket/" + self.user.id;
           self.initWebSocket(socketUrl);
         }else {
@@ -128,6 +134,10 @@ export default {
       }).catch(function (error) {
 
       });
+    },
+    // 创建头像
+    buildAvater(name) {
+      return name.substring(0, 1).toUpperCase();
     },
     // 初始化WebSocket
     initWebSocket(socketUrl) {
@@ -151,7 +161,6 @@ export default {
         };
         this.webSocket.send(JSON.stringify(this.msg));
         this.msgList.push(this.msg);
-        console.log(this.msg);
         this.msgContent = '';
       } else {
         console.log("请选择会话");
@@ -160,7 +169,6 @@ export default {
     // 接收服务端数据
     receiveMsg(e) {
       let msg = JSON.parse(e.data);
-      console.log(msg);
       if (msg.msgType === "broadcastLoginInfo") {
         this.loginMsgHandler(msg);
       }
@@ -172,7 +180,6 @@ export default {
       }else {
         this.msgList.push(msg);
       }
-
     },
     // 用户登录推送
     loginMsgHandler(msg){
@@ -188,7 +195,6 @@ export default {
         msgType: 'logout',
         userId: this.userId
       };
-      console.log('用户退出');
       console.log(msg);
       this.webSocket.send(JSON.stringify(msg));
     },
@@ -204,7 +210,6 @@ export default {
     },
     // 用户退出推送
     logoutMsgHandler(msg){
-      console.log("用户退出");
       let self = this;
       let user = {
         id: msg.user.id,
@@ -333,6 +338,24 @@ export default {
   .sidebar .user {
     padding: 18px 18px 10px;
   }
+  .sidebar .avater {
+      width: 40px;
+      height: 40px;
+      line-height: 40px;
+      margin: 5px 15px 5px 20px;
+      display: inline-block;
+      border-radius: 50%;
+      background: #409EFF;
+      color: #FFF;
+      font-size: 18px;
+      position: absolute;
+      left: 0;
+  }
+  .sidebar .user-name {
+    display: inline-block;
+    position: absolute;
+    left: 80px;
+  }
   .sidebar .name {
     font-size: 16px;
     text-align: left;
@@ -408,6 +431,18 @@ export default {
     outline: none;
     background-color: #26292e;
     box-sizing: border-box;
+  }
+  .sidebar .user-item {
+    height: 50px;
+    line-height: 50px;
+    border-bottom: 1px solid #292c33;
+    cursor: pointer;
+    -webkit-transition: background-color .1s;
+    transition: background-color .1s;
+    position: relative;
+  }
+  .sidebar .chat-item:hover {
+    background-color: hsla(0,0%,100%,.03);
   }
   .sidebar .chat-item {
     height: 40px;
